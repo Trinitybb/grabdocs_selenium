@@ -11,11 +11,19 @@ import os, time
 # ================= CONFIG =================
 GRABDOCS_URL = "https://app.grabdocs.com/login"
 
-EMAIL = os.getenv("GRABDOCS_EMAIL", "bowlingt0912@students.bowiestate.edu")
-PASSWORD = os.getenv("GRABDOCS_PASSWORD", "Testing123")
-OTP_CODE = os.getenv("GRABDOCS_OTP", "335577")
+EMAIL = "bowlingt0912@students.bowiestate.edu"
+PASSWORD = "Testing123"
+OTP_CODE = "335577"
 
-SCREENSHOT_DIR = "screenshots_housekeeping_absolute"
+SCREENSHOT_DIR = "screenshots_housekeeping_workspace_final"
+
+# ---------- SLOW MODE ----------
+SLOW_MODE = True
+SLOW_DELAY = 0.8
+
+def slow():
+    if SLOW_MODE:
+        time.sleep(SLOW_DELAY)
 
 # ================= SETUP =================
 if not os.path.exists(SCREENSHOT_DIR):
@@ -34,26 +42,30 @@ driver = webdriver.Chrome(
     options=options
 )
 
-wait = WebDriverWait(driver, 30)
+wait = WebDriverWait(driver, 40)
 actions = ActionChains(driver)
 
-print("\n=== CHAT HISTORY → #HOUSE KEEPING (ABSOLUTE XPATH) ===")
+print("\n=== CHAT HISTORY → #HOUSE KEEPING (REAL CHAT SWITCH) ===")
 
 try:
     # ================= LOGIN =================
     driver.get(GRABDOCS_URL)
+    slow()
 
     wait.until(EC.presence_of_element_located(
         (By.XPATH, "//input[contains(@placeholder,'Email') or @type='text']")
     )).send_keys(EMAIL)
+    slow()
 
     wait.until(EC.presence_of_element_located(
         (By.XPATH, "//input[@type='password']")
     )).send_keys(PASSWORD)
+    slow()
 
     wait.until(EC.element_to_be_clickable(
         (By.XPATH, "//button[contains(.,'Sign in') or contains(.,'Login')]")
     )).click()
+    slow()
 
     take_screenshot("login_submitted")
 
@@ -61,10 +73,12 @@ try:
     wait.until(EC.presence_of_element_located(
         (By.XPATH, "//input[contains(@placeholder,'OTP') or contains(@name,'otp')]")
     )).send_keys(OTP_CODE)
+    slow()
 
     wait.until(EC.element_to_be_clickable(
         (By.XPATH, "//button[contains(.,'Verify') or contains(.,'Continue')]")
     )).click()
+    slow()
 
     take_screenshot("otp_verified")
 
@@ -73,47 +87,55 @@ try:
         (By.XPATH, "//button[@title='Show History']")
     ))
     history_button.click()
-    time.sleep(0.7)
+    slow()
+
     take_screenshot("chat_history_opened")
 
-    # ================= CLICK EXACT HOUSEKEEPING ROW =================
-    print("Clicking EXACT #house keeping row (absolute XPath)...")
+    # ================= CLICK #HOUSE KEEPING (CRITICAL FIX) =================
+    print("Switching to #house keeping workspace chat...")
+    slow()
 
-    housekeeping_row = wait.until(EC.element_to_be_clickable(
-        (
-            By.XPATH,
-            "/html/body/div/div[1]/main/div[1]/div[3]/div[2]/div[1]/div[2]/div[2]/div"
-        )
+    housekeeping_h4 = wait.until(EC.presence_of_element_located(
+        (By.XPATH, "//h4[normalize-space()='#house keeping']")
     ))
 
-    driver.execute_script("arguments[0].scrollIntoView(true);", housekeeping_row)
-    time.sleep(0.3)
-    housekeeping_row.click()
+    # Scroll into view
+    driver.execute_script(
+        "arguments[0].scrollIntoView({block:'center'});",
+        housekeeping_h4
+    )
+    slow()
 
-    take_screenshot("housekeeping_chat_opened")
+    # REAL mouse click on the <h4> so React updates active chat
+    actions.move_to_element(housekeeping_h4)\
+           .pause(0.3)\
+           .click()\
+           .perform()
+
+    slow()
+    take_screenshot("housekeeping_chat_selected")
+    print("#house keeping chat selected.")
 
     # ================= TYPE MESSAGE =================
     print("Typing message into #house keeping...")
+    slow()
 
     chat_input = wait.until(EC.presence_of_element_located(
         (By.XPATH, "//div[@contenteditable='true'] | //textarea")
     ))
 
-    chat_input.click()
-    time.sleep(0.2)
+    actions.move_to_element(chat_input).click().perform()
+    slow()
 
     message = "hello from selenium testing 12/14/2025 -Trinity Bowling"
 
-    actions.move_to_element(chat_input) \
-           .click() \
-           .send_keys(message) \
-           .send_keys(Keys.ENTER) \
-           .perform()
+    for char in message:
+        actions.send_keys(char).pause(0.08)
+    actions.send_keys(Keys.ENTER).perform()
 
+    slow()
     take_screenshot("housekeeping_message_sent")
-    print("Message typed and Enter pressed.")
-
-    time.sleep(2)
+    print("Message sent in correct workspace.")
 
 except Exception as e:
     take_screenshot("test_failed")

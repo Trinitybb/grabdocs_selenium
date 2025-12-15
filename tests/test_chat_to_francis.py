@@ -17,6 +17,14 @@ OTP_CODE = "335577"
 
 SCREENSHOT_DIR = "screenshots_chat_history_francis"
 
+# ---------- SLOW MODE ----------
+SLOW_MODE = True
+SLOW_DELAY = 0.8
+
+def slow():
+    if SLOW_MODE:
+        time.sleep(SLOW_DELAY)
+
 # ================= SETUP =================
 if not os.path.exists(SCREENSHOT_DIR):
     os.makedirs(SCREENSHOT_DIR)
@@ -34,90 +42,104 @@ driver = webdriver.Chrome(
     options=options
 )
 
-wait = WebDriverWait(driver, 30)
+wait = WebDriverWait(driver, 40)
 actions = ActionChains(driver)
 
-print("\n=== CHAT HISTORY → FRANCIS (REAL KEYBOARD INPUT) ===")
+print("\n=== CHAT HISTORY → FRANCIS ONODUEZE I (REAL CLICK) ===")
 
 try:
     # ================= LOGIN =================
     driver.get(GRABDOCS_URL)
+    slow()
 
-    email_input = wait.until(EC.presence_of_element_located(
+    wait.until(EC.presence_of_element_located(
         (By.XPATH, "//input[contains(@placeholder,'Email') or @type='text']")
-    ))
-    email_input.send_keys(EMAIL)
+    )).send_keys(EMAIL)
+    slow()
 
-    password_input = wait.until(EC.presence_of_element_located(
+    wait.until(EC.presence_of_element_located(
         (By.XPATH, "//input[@type='password']")
-    ))
-    password_input.send_keys(PASSWORD)
+    )).send_keys(PASSWORD)
+    slow()
 
-    sign_in_btn = wait.until(EC.element_to_be_clickable(
+    wait.until(EC.element_to_be_clickable(
         (By.XPATH, "//button[contains(.,'Sign in') or contains(.,'Login')]")
-    ))
-    sign_in_btn.click()
+    )).click()
+    slow()
 
     take_screenshot("login_submitted")
 
     # ================= OTP =================
-    otp_input = wait.until(EC.presence_of_element_located(
+    wait.until(EC.presence_of_element_located(
         (By.XPATH, "//input[contains(@placeholder,'OTP') or contains(@name,'otp')]")
-    ))
-    otp_input.send_keys(OTP_CODE)
+    )).send_keys(OTP_CODE)
+    slow()
 
-    verify_btn = wait.until(EC.element_to_be_clickable(
+    wait.until(EC.element_to_be_clickable(
         (By.XPATH, "//button[contains(.,'Verify') or contains(.,'Continue')]")
-    ))
-    verify_btn.click()
+    )).click()
+    slow()
 
     take_screenshot("otp_verified")
 
-    # ================= WAIT FOR CHAT HISTORY BUTTON =================
+    # ================= OPEN CHAT HISTORY =================
     history_button = wait.until(EC.element_to_be_clickable(
         (By.XPATH, "//button[@title='Show History']")
     ))
-
-    # ================= OPEN CHAT HISTORY =================
     history_button.click()
-    time.sleep(0.5)
+    slow()
+
     take_screenshot("chat_history_opened")
 
-    # ================= CLICK FRANCIS CHAT ROW =================
-    francis_chat_row = wait.until(EC.element_to_be_clickable(
-        (
-            By.XPATH,
-            "//h4[contains(text(),'Chat with GrabDocs Docs-Francis')]"
-            "/ancestor::div[contains(@class,'flex')]"
-        )
+    # ================= CLICK FRANCIS (CORRECT WAY) =================
+    print("Selecting Francis Onodueze I chat...")
+    slow()
+
+    francis_h4 = wait.until(EC.presence_of_element_located(
+        (By.XPATH, "//h4[normalize-space()='Chat with Francis Onodueze I']")
     ))
 
-    francis_chat_row.click()
-    time.sleep(0.5)
-    take_screenshot("francis_chat_opened")
+    # Scroll into view
+    driver.execute_script(
+        "arguments[0].scrollIntoView({block:'center'});",
+        francis_h4
+    )
+    slow()
 
-    # ================= SEND MESSAGE (REAL TYPING) =================
+    # REAL mouse click on the <h4>
+    actions.move_to_element(francis_h4) \
+           .pause(0.3) \
+           .click() \
+           .perform()
+
+    slow()
+    take_screenshot("francis_chat_selected")
+    print("Francis chat selected.")
+
+    # ================= SEND MESSAGE =================
+    print("Typing message to Francis...")
+    slow()
+
     chat_input = wait.until(EC.presence_of_element_located(
         (By.XPATH, "//div[@contenteditable='true'] | //textarea")
     ))
 
-    # CLICK INTO INPUT
-    chat_input.click()
-    time.sleep(0.2)
+    actions.move_to_element(chat_input).click().perform()
+    slow()
 
     message = "hello francis testing"
 
-    # TYPE LIKE A HUMAN
-    actions.move_to_element(chat_input).click().send_keys(message).send_keys(Keys.ENTER).perform()
+    for char in message:
+        actions.send_keys(char).pause(0.08)
+    actions.send_keys(Keys.ENTER).perform()
 
-    take_screenshot("message_typed_and_enter_pressed")
-    print("Message typed and Enter pressed (ActionChains).")
-
-    time.sleep(2)  # allow UI to process send
+    slow()
+    take_screenshot("message_sent")
+    print("Message sent to Francis.")
 
 except Exception as e:
     take_screenshot("test_failed")
-    print(f"TEST FAILED: {e}")
+    print(f"❌ TEST FAILED: {e}")
 
 finally:
     driver.quit()
