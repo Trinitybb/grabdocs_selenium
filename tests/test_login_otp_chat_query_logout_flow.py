@@ -33,8 +33,8 @@ try:
         (By.XPATH, "//input[@type='password']")
     ))
 
-    username_field.send_keys("barbietrin4eva@gmail.com")
-    password_field.send_keys("testing123!")
+    username_field.send_keys("bowlingt0912@students.bowiestate.edu")
+    password_field.send_keys("Testing123")
 
     sign_in_button = wait.until(EC.element_to_be_clickable(
         (By.XPATH, "//button[contains(., 'Sign in')]")
@@ -79,9 +79,11 @@ except Exception as e:
     take_screenshot("login_failed")
     print(f"Login or OTP verification failed ({e})")
 
-# ---------------- CHAT TEST ----------------
-print("\n[2] Testing Chat Feature...")
+# ---------------- WORKSPACE CHAT TEST ----------------
+print("\n[2] Testing Workspace Chat...")
+
 try:
+    # ---- Locate chat input ----
     chat_input = WebDriverWait(driver, 30).until(
         EC.presence_of_element_located((
             By.XPATH,
@@ -89,25 +91,48 @@ try:
         ))
     )
 
-    query = 'do you have a document owned by "Trinity Bowling"? '
-    chat_input.send_keys(query)
-    print(f"Sent chat query: {query}")
+    message = "hello from selenium testing"
+    chat_input.send_keys(message)
+    chat_input.send_keys(u'\ue007')  # Enter
 
-    chat_input.send_keys(u'\ue007')  # Press Enter
+    print(f"Sent workspace message: {message}")
 
-    print("Waiting for chatbot reply...")
     WebDriverWait(driver, 30).until(
         EC.presence_of_element_located((
-            By.XPATH,
-            "//div[contains(., 'lmaooooooo') or contains(., 'document') or contains(., 'not found') or contains(., 'found')]"
+            By.XPATH, f"//div[contains(., '{message}')]"
         ))
     )
-    print("Chatbot reply received.")
-    take_screenshot("chat_reply_received")
+
+    take_screenshot("workspace_message_sent")
+
+    # ---- CLICK SHOW HISTORY ----
+    print("Opening chat history...")
+
+    history_button = WebDriverWait(driver, 30).until(
+        EC.element_to_be_clickable((
+            By.XPATH, "//button[@title='Show History']"
+        ))
+    )
+
+    driver.execute_script("arguments[0].scrollIntoView(true);", history_button)
+    time.sleep(0.3)
+    driver.execute_script("arguments[0].click();", history_button)
+
+    print("Show History button clicked.")
+
+    WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((
+            By.XPATH,
+            "//div[contains(., 'hello from selenium testing')]"
+        ))
+    )
+
+    take_screenshot("chat_history_opened")
+    print("Chat history displayed successfully.")
 
 except Exception as e:
-    take_screenshot("chat_failed")
-    print(f"Chat interaction failed ({e})")
+    take_screenshot("workspace_chat_failed")
+    print(f"Workspace chat test failed ({e})")
 
 # ---------------- LOGOUT TEST ----------------
 print("\n[3] Logging Out...")
